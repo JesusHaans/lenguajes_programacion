@@ -44,3 +44,37 @@ data Tokens = ParA
 
 2.- Implemente una función parser para las expresiones
 --}
+module Notas where
+import Data.Char
+import Data.List
+
+data M = E
+   | Par M --( M )
+   | Conc M M -- MM
+    deriving ( Show , Eq )
+
+data Tokens = ParA
+   | ParC
+   | Desconocido Char
+    deriving ( Show , Eq )
+
+lexer :: String -> [Tokens]
+lexer [] = []
+lexer (' ':xs) = lexer xs
+lexer ('(':xs) = ParA : lexer xs
+lexer (')':xs) = ParC : lexer xs
+lexer (x:xs) = Desconocido x : lexer xs
+
+parser :: [Tokens] -> M
+parser [] = E
+parser t@((Desconocido x):xs) = parseError t
+parser (ParA:(ParC:xs)) = if xs == [] then Par E else Conc (Par E) (parser xs)
+parser t@(ParA:xs) = if (last xs) == ParC then Par (parser (init xs)) else  parseError t
+parser t@(ParA:((Desconocido x):xs)) = parseError t 
+parser t@(ParC:xs) = parseError t
+parser t@(ParA:[]) = parseError t
+
+
+
+parseError :: [Tokens] -> a
+parseError _ = error "Parse error"
